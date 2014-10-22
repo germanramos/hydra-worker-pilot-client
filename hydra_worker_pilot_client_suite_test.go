@@ -1,8 +1,8 @@
 package hydra_worker_pilot_client_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	. "github.com/innotech/hydra-worker-pilot-client/vendors/github.com/onsi/ginkgo"
+	. "github.com/innotech/hydra-worker-pilot-client/vendors/github.com/onsi/gomega"
 
 	"testing"
 )

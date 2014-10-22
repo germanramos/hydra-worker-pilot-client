@@ -10,69 +10,119 @@ import (
 )
 
 const (
-	clientFilterFieldKey     string = "clientFilterField"
-	instanceFilterFieldKey   string = "instanceFilterField"
-	matchersKey              string = "matchers"
-	instanceFilterPatternKey string = "instanceFilterPattern"
-	clientFilterPatternsKey  string = "clientFilterPatterns"
+	ClientFilterFieldKey     string = "clientFilterField"
+	InstanceFilterFieldKey   string = "instanceFilterField"
+	MatchersKey              string = "matchers"
+	InstanceFilterPatternKey string = "instanceFilterPattern"
+	ClientFilterPatternsKey  string = "clientFilterPatterns"
 )
 
 type Matcher struct {
-	instanceFilterPattern string
-	clientFilterPatterns  []string
+	InstanceFilterPattern string
+	ClientFilterPatterns  []string
 }
 
 func main() {
 	// New Worker connected to Hydra Load Balancer
 	pilotClientWorker := worker.NewWorker(os.Args)
-	fn := func(instances []interface{}, requestParams map[string][]string, workerArgs map[string]interface{}) (finalInstances []interface{}) {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Println("Error: ", r)
-			}
-		}()
-		finalInstances = instances
-		var tmpInstances []interface{}
+	// fn := func(instances []interface{}, requestParams map[string][]string, workerArgs map[string]interface{}) (finalInstances []interface{}) {
+	// 	defer func() {
+	// 		if r := recover(); r != nil {
+	// 			log.Println("Error: ", r)
+	// 		}
+	// 	}()
+	// 	finalInstances = instances
+	// 	var tmpInstances []interface{}
 
-		// TODO: Maybe only need call to obtainClientFilterValue
-		clientFilterField, err := obtainClientFilterField(workerArgs)
-		if err != nil {
-			log.Println(err.Error())
-			return instances
+	// 	// TODO: Maybe only need call to obtainClientFilterValue
+	// 	clientFilterField, err := obtainClientFilterField(workerArgs)
+	// 	if err != nil {
+	// 		log.Println(err.Error())
+	// 		return instances
+	// 	}
+	// 	clientFilterValue, err := obtainClientFilterValue(requestParams, clientFilterField)
+	// 	if err != nil {
+	// 		log.Println(err.Error())
+	// 		return instances
+	// 	}
+	// 	instanceFilterField, err := obtainInstanceFilterField(workerArgs)
+	// 	if err != nil {
+	// 		log.Println(err.Error())
+	// 		return instances
+	// 	}
+	// 	matchers, err := obtainMatchers(workerArgs)
+	// 	if err != nil {
+	// 		log.Println(err.Error())
+	// 		return instances
+	// 	}
+	// 	for _, matcher := range matchers {
+	// 		for _, pattern := range matcher.clientFilterPatterns {
+	// 			r, err := regexp.Compile(pattern)
+	// 			if err != nil {
+	// 				log.Println("Invalid regexp pattern: " + pattern)
+	// 			}
+	// 			matched := r.MatchString(clientFilterValue)
+	// 			// TODO:
+	// 			if matched == false {
+	// 				continue
+	// 			}
+	// 			tmpInstances = findCompatibleInstances(instances, instanceFilterField, matcher.instanceFilterPattern)
+	// 		}
+	// 	}
+	// 	finalInstances = tmpInstances
+	// 	return
+	// }
+	pilotClientWorker.Run(Pilot)
+}
+
+func Pilot(instances []interface{}, requestParams map[string][]string, workerArgs map[string]interface{}) (finalInstances []interface{}) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("Error: ", r)
 		}
-		clientFilterValue, err := obtainClientFilterValue(requestParams, clientFilterField)
-		if err != nil {
-			log.Println(err.Error())
-			return instances
-		}
-		instanceFilterField, err := obtainInstanceFilterField(workerArgs)
-		if err != nil {
-			log.Println(err.Error())
-			return instances
-		}
-		matchers, err := obtainMatchers(workerArgs)
-		if err != nil {
-			log.Println(err.Error())
-			return instances
-		}
-		for _, matcher := range matchers {
-			for _, pattern := range matcher.clientFilterPatterns {
-				r, err := regexp.Compile(pattern)
-				if err != nil {
-					log.Println("Invalid regexp pattern: " + pattern)
-				}
-				matched := r.MatchString(clientFilterValue)
-				// TODO:
-				if matched == false {
-					continue
-				}
-				tmpInstances = findCompatibleInstances(instances, instanceFilterField, matcher.instanceFilterPattern)
-			}
-		}
-		finalInstances = tmpInstances
-		return
+	}()
+	finalInstances = instances
+	var tmpInstances []interface{}
+
+	// TODO: Maybe only need call to obtainClientFilterValue
+	clientFilterField, err := obtainClientFilterField(workerArgs)
+	if err != nil {
+		log.Println(err.Error())
+		return instances
 	}
-	pilotClientWorker.Run(fn)
+	clientFilterValue, err := obtainClientFilterValue(requestParams, clientFilterField)
+	if err != nil {
+		log.Println(err.Error())
+		return instances
+	}
+	instanceFilterField, err := obtainInstanceFilterField(workerArgs)
+	if err != nil {
+		log.Println(err.Error())
+		return instances
+	}
+	matchers, err := obtainMatchers(workerArgs)
+	if err != nil {
+		log.Println(err.Error())
+		return instances
+	}
+	for _, matcher := range matchers {
+		for _, pattern := range matcher.ClientFilterPatterns {
+			r, err := regexp.Compile(pattern)
+			if err != nil {
+				log.Println("Invalid regexp pattern: " + pattern)
+			}
+			matched := r.MatchString(clientFilterValue)
+			// TODO:
+			if matched == false {
+				continue
+			}
+			tmpInstances = findCompatibleInstances(instances, instanceFilterField, matcher.InstanceFilterPattern)
+		}
+	}
+	if len(tmpInstances) > 0 {
+		finalInstances = tmpInstances
+	}
+	return
 }
 
 func findCompatibleInstances(instances []interface{}, instanceFilterField string, instanceFilterPattern string) []interface{} {
@@ -100,7 +150,7 @@ func findCompatibleInstances(instances []interface{}, instanceFilterField string
 }
 
 func obtainClientFilterField(workerArgs map[string]interface{}) (string, error) {
-	if val, ok := workerArgs[clientFilterFieldKey]; ok && val != "" {
+	if val, ok := workerArgs[ClientFilterFieldKey]; ok && val != "" {
 		return val.(string), nil
 	}
 	return "", errors.New("Invalid clientFilterField")
@@ -114,7 +164,7 @@ func obtainClientFilterValue(requestParams map[string][]string, param string) (s
 }
 
 func obtainInstanceFilterField(workerArgs map[string]interface{}) (string, error) {
-	if val, ok := workerArgs[instanceFilterFieldKey]; ok && val != "" {
+	if val, ok := workerArgs[InstanceFilterFieldKey]; ok && val != "" {
 		return val.(string), nil
 	}
 	return "", errors.New("Invalid instanceFilterField")
@@ -122,7 +172,7 @@ func obtainInstanceFilterField(workerArgs map[string]interface{}) (string, error
 
 func obtainMatchers(workerArgs map[string]interface{}) ([]Matcher, error) {
 	// TODO: Maybe move the recover function in all obtain (not string casting)
-	if val, ok := workerArgs[matchersKey]; ok && val != "" {
+	if val, ok := workerArgs[MatchersKey]; ok && val != "" {
 		rawMatchers := val.([]map[string]interface{})
 		rawMatchersLen := len(rawMatchers)
 		matchers := make([]Matcher, rawMatchersLen, rawMatchersLen)
@@ -130,8 +180,8 @@ func obtainMatchers(workerArgs map[string]interface{}) ([]Matcher, error) {
 			ifp, _ := obtainInstanceFilterPattern(rawMatchers[i])
 			cfp, _ := obtainClientFilterPatterns(rawMatchers[i])
 			matchers[i] = Matcher{
-				instanceFilterPattern: ifp,
-				clientFilterPatterns:  cfp,
+				InstanceFilterPattern: ifp,
+				ClientFilterPatterns:  cfp,
 			}
 		}
 		return matchers, nil
@@ -140,21 +190,22 @@ func obtainMatchers(workerArgs map[string]interface{}) ([]Matcher, error) {
 }
 
 func obtainInstanceFilterPattern(matcher map[string]interface{}) (string, error) {
-	if val, ok := matcher[instanceFilterPatternKey]; ok && val != "" {
+	if val, ok := matcher[InstanceFilterPatternKey]; ok && val != "" {
 		return val.(string), nil
 	}
 	return "", errors.New("Invalid instanceFilterPattern")
 }
 
 func obtainClientFilterPatterns(matcher map[string]interface{}) ([]string, error) {
-	if val, ok := matcher[clientFilterPatternsKey]; ok && val != "" {
+	if val, ok := matcher[ClientFilterPatternsKey]; ok && val != "" {
 		return val.([]string), nil
 	}
 	return nil, errors.New("Invalid clientFilterPatterns")
 }
 
 func obtainInstanceFilterValue(instance map[string]interface{}, filterField string) (string, error) {
-	if val, ok := instance[filterField]; ok && val != "" {
+	instanceInfo := instance["Info"].(map[string]interface{})
+	if val, ok := instanceInfo[filterField]; ok && val != "" {
 		return val.(string), nil
 	}
 	return "", errors.New("Invalid instanceFilterValue")

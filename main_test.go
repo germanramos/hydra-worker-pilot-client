@@ -28,18 +28,18 @@ var _ = Describe("PilotClient", func() {
 			},
 		}
 		workerArgs = map[string]interface{}{
-			instanceFilterFieldKey: "version",
-			matchersKey: []map[string]interface{}{
+			InstanceFilterFieldKey: "version",
+			MatchersKey: []map[string]interface{}{
 				map[string]interface{}{
-					instanceFilterPatternKey: "1.*",
-					clientFilterPatternsKey:  []string{"xe4([0-9]+)", "xe5([0-9]+)"},
+					InstanceFilterPatternKey: "1.*",
+					ClientFilterPatternsKey:  []string{"xe4([0-9]+)", "xe5([0-9]+)"},
 				},
 				map[string]interface{}{
-					instanceFilterPatternKey: `1\.\0\.0`,
-					clientFilterPatternsKey:  []string{".*"},
+					InstanceFilterPatternKey: `1\.0\.0`,
+					ClientFilterPatternsKey:  []string{".*"},
 				},
 			},
-			clientFilterFieldKey: "client_uuid",
+			ClientFilterFieldKey: "client_uuid",
 		}
 		requestParams = map[string][]string{
 			"client_uuid": []string{"xe47030"},
@@ -97,15 +97,15 @@ var _ = Describe("PilotClient", func() {
 	})
 	Context("when invalid client filter value", func() {
 		It("should return input instances", func() {
-			requestParams["client_uuid"] = ""
+			requestParams["client_uuid"] = []string{}
 			outputInstances := Pilot(inputInstances, requestParams, workerArgs)
 			Expect(outputInstances).To(Equal(inputInstances))
 		})
 	})
 	Context("when client parameter doesn't match with any configured worker matcher", func() {
 		It("should return input instances", func() {
-			requestParams["client_uuid"] = "xe10234"
-			workerArgs[matchersKey][1][clientFilterPatternsKey] = []string{"xe6([0-9]+)"}
+			requestParams["client_uuid"] = []string{"xe10234"}
+			workerArgs[MatchersKey].([]map[string]interface{})[1][ClientFilterPatternsKey] = []string{"xe6([0-9]+)"}
 			outputInstances := Pilot(inputInstances, requestParams, workerArgs)
 			Expect(outputInstances).To(Equal(inputInstances))
 		})
@@ -114,7 +114,7 @@ var _ = Describe("PilotClient", func() {
 		Context("when doesn't exist instance filter value", func() {
 			It("should return input instances", func() {
 				for i := 0; i < len(inputInstances); i++ {
-					delete(inputInstances[i]["Info"], "version")
+					delete(inputInstances[i].(map[string]interface{})["Info"].(map[string]interface{}), "version")
 				}
 				outputInstances := Pilot(inputInstances, requestParams, workerArgs)
 				Expect(outputInstances).To(Equal(inputInstances))
@@ -123,7 +123,7 @@ var _ = Describe("PilotClient", func() {
 		Context("when invalid instance filter value", func() {
 			It("should return input instances", func() {
 				for i := 0; i < len(inputInstances); i++ {
-					delete(inputInstances[i]["Info"]["version"], "")
+					inputInstances[i].(map[string]interface{})["Info"].(map[string]interface{})["version"] = ""
 				}
 				outputInstances := Pilot(inputInstances, requestParams, workerArgs)
 				Expect(outputInstances).To(Equal(inputInstances))
@@ -131,17 +131,17 @@ var _ = Describe("PilotClient", func() {
 		})
 		Context("when doesn't exist compatible instances", func() {
 			It("should return input instances", func() {
-				workerArgs[matchersKey][0][instanceFilterPatternKey] = "2.*"
+				workerArgs[MatchersKey].([]map[string]interface{})[1][InstanceFilterPatternKey] = "2.*"
 				outputInstances := Pilot(inputInstances, requestParams, workerArgs)
 				Expect(outputInstances).To(Equal(inputInstances))
 			})
 		})
 		Context("when exists compatible instances", func() {
 			It("should return input instances", func() {
-				requestParams["client_uuid"] = "xe10234"
+				requestParams["client_uuid"] = []string{"xe10234"}
 				outputInstances := Pilot(inputInstances, requestParams, workerArgs)
 				Expect(outputInstances).To(HaveLen(1))
-				Expect(outputInstances).To(Equal(inputInstances[1:]))
+				Expect(outputInstances).To(Equal(inputInstances[0:1]))
 			})
 		})
 	})
