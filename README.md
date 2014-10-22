@@ -39,19 +39,19 @@ In apps.json:
 ## Configuration example
 ```
 {
-  "worker": "PilotClient"
-	"clientFilterField: "client_id",
-	"instanceFilterField": "version",
-	"matchers": [
-	  {
-	    "instanceFilterPattern": "1.*",
-	    "clientFilterPatterns": ["xe4([0-9]+)", "xe5([0-9]+)"]
-	  },
-	  {
-	    "instanceFilterPattern": "1\.0\.0"
-	    "clientFilterPatterns": [".*"]
-	  }
-	]
+  "worker": "PilotClient",
+  "clientFilterField: "client_id",
+  "instanceFilterField": "version",
+  "matchers": [
+  {
+    "instanceFilterPattern": "1.*",
+    "clientFilterPatterns": ["xe4([0-9]+)", "xe5([0-9]+)"]
+  },
+  {
+    "instanceFilterPattern": "1\.0\.0",
+    "clientFilterPatterns": [".*"]
+  }
+  ]
 }
 ```
 In the example, the client requests with, for example, client_id=xe47030 or client_id=xe59613 would be driven to instances with, for example, version=1.1.1 or version=1.9.5 and any other client_id would be driven to instances with version=1.0.0. If something is wrong or no instances have the associated version all initial instances will be returned.
