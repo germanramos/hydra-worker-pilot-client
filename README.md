@@ -1,7 +1,7 @@
 hydra-worker-pilot-client
 =========================
 
-Worker for Hydra v3.2.x 
+Worker for Hydra v3.2.x
 Piloting client request through specific instances.
 No new maps will be generated.
 
